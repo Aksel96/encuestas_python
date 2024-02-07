@@ -68,21 +68,6 @@ def menu_partidos():
     print("3 - Verde")
 
 
-def verificar_opcion(opcion):
-    match opcion:
-        case "1":
-            print("\tElegiste rojo")
-            return 1
-        case "2":
-            print("\tElegiste naranja")
-            return 2
-        case "3":
-            print("\tElegiste verde")
-            return 3
-        case _:
-            print("\t\tOpcion no valida")
-            return 4
-
 
 def ver_opc_menu_princ(opcion):
     match opcion:
@@ -97,15 +82,27 @@ def ver_opc_menu_princ(opcion):
             return 4
 
 
-def ganador(rojo, verde, naranja):
-    max_valor = max(rojo, naranja, verde)
+def ganador(rojo, verde,naranja):
+    # Crear una lista con los resultados y los nombres de los partidos
+    resultados = [(rojo, 'Rojo'), (naranja, 'Naranja'), (verde, 'Verde')]
 
-    ganadores = [color for color in ['Rojo', 'Naranja', 'Verde'] if eval(color.lower()) == max_valor]
+    # Ordenar la lista por los resultados en orden descendente
+    resultados.sort(reverse=True, key=lambda x: x[0])
 
-    if len(ganadores) == 1:
-        return f"{ganadores[0]} es el ganador"
+    # Verificar empates
+    empate_primero = resultados[0][0] == resultados[1][0]
+    empate_segundo = resultados[1][0] == resultados[2][0]
+
+    if empate_primero and empate_segundo:
+        resultado = f"\t\t\tEmpate en el primer, segundo y tercer lugar entre {resultados[0][1]}, {resultados[1][1]} y {resultados[2][1]}\n"
+    elif empate_primero:
+        resultado = f"\t\t\tEmpate en el primer lugar entre {resultados[0][1]} y {resultados[1][1]}\n\t\t\t{resultados[2][1]} en tercer lugar\n"
+    elif empate_segundo:
+        resultado = f"\t\t\t{resultados[0][1]} en primer lugar\n\t\t\tempate en el segundo lugar entre {resultados[1][1]} y {resultados[2][1]}\n"
     else:
-        return f"Empate entre: {', '.join(ganadores)}"
+        resultado = f"\t\t\t{resultados[0][1]} en primer lugar\n\t\t\t{resultados[1][1]} en segundo lugar\n\t\t\t{resultados[2][1]} en tercer lugar\n"
+
+    return resultado.upper()
 
 
 def porcentaje_aparicion_letras_m_f(lista):
@@ -114,11 +111,11 @@ def porcentaje_aparicion_letras_m_f(lista):
 
     total_letras = len(lista)
 
-    conteo_m = lista.count('H')
-    conteo_f = lista.count('M')
+    conteo_h = lista.count('H')
+    conteo_m = lista.count('M')
 
-    porcentaje_H = (conteo_m / total_letras) * 100
-    porcentaje_M = (conteo_f / total_letras) * 100
+    porcentaje_H = (conteo_h / total_letras) * 100
+    porcentaje_M = (conteo_m / total_letras) * 100
 
     return porcentaje_H, porcentaje_M
 
@@ -132,6 +129,15 @@ def es_numerico(entrada):
             return True
         except ValueError:
             return False
+
+
+def preguntar_preferencia(partido):
+    votos = input(f"¿Cuántos votos quieres dar al partido {partido}? (0 para no votar) : ")
+    if es_numerico(votos):
+        return int(votos)
+    else:
+        print("Por favor, introduce un valor numérico.")
+        return "NA"
 
 
 def main():
@@ -168,19 +174,24 @@ def main():
         turno = 1
         while personas > 0:
             print(f"Eres el encuestado numero {turno}")
-            num_cuenta = input("Ingresa tu numero de cuenta: ")
+            num_cuenta = input("Ingresa tu numero de cuenta (9 digitos): ")
             while True:
                 if es_numerico(num_cuenta):
-                    if len(num_cuenta) == 4:
-                        int(num_cuenta)
-                        break
+                    if len(num_cuenta) == 9:
+                        if int(num_cuenta) < 0:
+                            print("Entrada no valida, no se admiten numeros negativos")
+                            print("El numero de cuenta son 9 digitos")
+                            num_cuenta = input("Ingresa tu numero de cuenta: ")
+                        else:
+                            int(num_cuenta)
+                            break
                     else:
                         print("La entrada no es valida")
-                        print("El numero de cuenta son 4 digitos")
+                        print("El numero de cuenta son 9 digitos")
                         num_cuenta = input("Ingresa tu numero de cuenta: ")
                 else:
-                    print("La entrada no es valida")
-                    print("El numero de cuenta son 4 digitos")
+                    print("La entrada no es valida, no se admiten letras o simbolos especiales")
+                    print("El numero de cuenta son 9 digitos")
                     num_cuenta = input("Ingresa tu numero de cuenta: ")
 
             if num_cuenta in lista_votantes:
@@ -196,31 +207,51 @@ def main():
 
                 votante = Votante(sexo, num_cuenta)
                 sexos.append(votante.get_sexo())
-                menu_partidos()
+
                 while votante.get_votos() > 0:
                     print(f"Tienes {votante.get_votos()} votos restantes")
-                    opcion = input("Introduce tu opcion: ")
-                    voto = verificar_opcion(opcion)
-                    match voto:
-                        case 1:
-                            rojo += 1
-                            votante.votar(1)
-                        case 2:
-                            naranja += 1
-                            votante.votar(1)
-                        case 3:
-                            verde += 1
-                            votante.votar(1)
-                        case 4:
-                            print("Revisa las opciones")
+
+                    # Pregunta al usuario por cada partido
+                    for partido in ['Rojo', 'Naranja', 'Verde']:
+                        votos_partido = preguntar_preferencia(partido)
+                        # Bucle de verificaciones
+                        while True:
+                            # Verificador que no sea una cadena de texto introducida
+                            if votos_partido == "NA":
+                                print(f"Tienes {votante.get_votos()} votos restantes")
+                                votos_partido = preguntar_preferencia(partido)
+
+                            # Verificador que no ingrese mas de 5 votos
+                            elif votos_partido > votante.get_votos():
+                                print("No dispones de votos suficientes, por favor, ingresa una cantidad válida.")
+                                print(f"Tienes {votante.get_votos()} votos restantes")
+                                votos_partido = preguntar_preferencia(partido)
+
+                            # verificador que no ingrese numeos negativos
+                            elif votos_partido < 0:
+                                print("No se admiten valores negativos, intentalo nuevamente:")
+                                print(f"Tienes {votante.get_votos()} votos restantes")
+                                votos_partido = preguntar_preferencia(partido)
+                            else:
+                                break
+
+                        if votos_partido > 0:
+                            if partido == 'Rojo':
+                                rojo += votos_partido
+                            elif partido == 'Naranja':
+                                naranja += votos_partido
+                            elif partido == 'Verde':
+                                verde += votos_partido
+
+                            votante.votar(votos_partido)
                 personas -= 1
                 lista_votantes.append(votante.get_num_cuenta())
                 turno += 1
 
         print("\t###------------### Resultados de la Encuesta ###------------###\n")
-        resultado = ganador(rojo, verde, naranja)
-        print(f"\t\t\t######### {resultado.upper()} #########")
-
+        resultado = ganador(rojo,verde,naranja)
+        print(f"{resultado}")
+        print("###-------------------------------------------------------------------###")
         print(f"""Los votos fueron
             Rojo:       {rojo}
             Naranja:    {naranja}
