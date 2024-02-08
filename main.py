@@ -62,11 +62,10 @@ def menu_principal():
 
 
 def menu_partidos():
-    print("Elige el partido al que quieres votar preferencia")
-    print("1 - Rojo")
-    print("2 - Naranja")
-    print("3 - Verde")
-
+    print("La encuesta es sobre tu preferencia con los siguientes partidos:")
+    print("Rojo")
+    print("Naranja")
+    print("Verde")
 
 
 def ver_opc_menu_princ(opcion):
@@ -82,8 +81,7 @@ def ver_opc_menu_princ(opcion):
             return 4
 
 
-def ganador(rojo, verde,naranja):
-    # Crear una lista con los resultados y los nombres de los partidos
+def ganador(rojo, verde, naranja):
     resultados = [(rojo, 'Rojo'), (naranja, 'Naranja'), (verde, 'Verde')]
 
     # Ordenar la lista por los resultados en orden descendente
@@ -132,7 +130,7 @@ def es_numerico(entrada):
 
 
 def preguntar_preferencia(partido):
-    votos = input(f"¿Cuántos votos quieres dar al partido {partido}? (0 para no votar) : ")
+    votos = input(f"¿Cuántos votos quieres dar al partido {partido}?: ")
     if es_numerico(votos):
         return int(votos)
     else:
@@ -173,6 +171,7 @@ def main():
         personas = int(numero_personas)
         turno = 1
         while personas > 0:
+            menu_partidos()
             print(f"Eres el encuestado numero {turno}")
             num_cuenta = input("Ingresa tu numero de cuenta (9 digitos): ")
             while True:
@@ -244,12 +243,15 @@ def main():
                                 verde += votos_partido
 
                             votante.votar(votos_partido)
+                        if votante.get_votos() == 0:
+                            break
+                print(f"Gracias encuestado numero {turno} por votar\n")
                 personas -= 1
                 lista_votantes.append(votante.get_num_cuenta())
                 turno += 1
 
         print("\t###------------### Resultados de la Encuesta ###------------###\n")
-        resultado = ganador(rojo,verde,naranja)
+        resultado = ganador(rojo, verde, naranja)
         print(f"{resultado}")
         print("###-------------------------------------------------------------------###")
         print(f"""Los votos fueron
